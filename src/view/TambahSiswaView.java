@@ -101,6 +101,26 @@ public class TambahSiswaView {
         );
         jenisKelaminComboBox.setPromptText("Pilih Jenis Kelamin");
 
+        // Tambahkan field Tahun Ajaran
+        Label tahunAjaranLabel = new Label("Tahun Ajaran:");
+        tahunAjaranLabel.setStyle("-fx-text-fill: #34495e; -fx-font-weight: bold;");
+        ComboBox<String> tahunAjaranComboBox = new ComboBox<>();
+        
+        // Generate tahun ajaran dinamis dari tahun sekarang
+        int currentYear = java.time.Year.now().getValue();
+        tahunAjaranComboBox.getItems().addAll(
+            "2023/2024",
+            (currentYear - 1) + "/" + currentYear,
+            currentYear + "/" + (currentYear + 1),
+            (currentYear + 1) + "/" + (currentYear + 2)
+        );
+        tahunAjaranComboBox.setStyle(
+            inputStyle + 
+            "-fx-background-color: white; " +
+            "-fx-background-radius: 5;"
+        );
+        tahunAjaranComboBox.setPromptText("Pilih Tahun Ajaran");
+
         // Tambahkan komponen ke grid
         formGrid.add(nisLabel, 0, 0);
         formGrid.add(nisField, 1, 0);
@@ -110,6 +130,8 @@ public class TambahSiswaView {
         formGrid.add(kelasComboBox, 1, 2);
         formGrid.add(jenisKelaminLabel, 0, 3);
         formGrid.add(jenisKelaminComboBox, 1, 3);
+        formGrid.add(tahunAjaranLabel, 0, 4);
+        formGrid.add(tahunAjaranComboBox, 1, 4);
 
         // Tombol dengan gaya modern
         Button tambahButton = new Button("Tambah Siswa");
@@ -127,13 +149,14 @@ public class TambahSiswaView {
             String nama = namaField.getText();
             String kelas = kelasComboBox.getValue();
             String jenisKelamin = jenisKelaminComboBox.getValue();
+            String tahunAjaran = tahunAjaranComboBox.getValue();
 
-            if (nis.isEmpty() || nama.isEmpty() || kelas == null || jenisKelamin == null) {
+            if (nis.isEmpty() || nama.isEmpty() || kelas == null || jenisKelamin == null || tahunAjaran == null) {
                 showAlert("Harap isi semua field!");
                 return;
             }
 
-            Siswa siswa = new Siswa(nis, nama, kelas, jenisKelamin, jenisKelamin);
+            Siswa siswa = new Siswa(nis, nama, kelas, jenisKelamin, tahunAjaran);
             boolean berhasil = siswaController.tambahSiswa(siswa);
 
             if (berhasil) {
@@ -142,6 +165,7 @@ public class TambahSiswaView {
                 namaField.clear();
                 kelasComboBox.setValue(null);
                 jenisKelaminComboBox.setValue(null);
+                tahunAjaranComboBox.setValue(null);
             } else {
                 showAlert("Gagal menambahkan siswa. Periksa kembali data.");
             }

@@ -27,6 +27,11 @@ public class InputPresensiView {
     private Guru guru;
     private PresensiController presensiController;
     private SiswaController siswaController;
+    
+    // Tambahkan field untuk daftarSiswa dan siswaTableView
+    private List<Siswa> daftarSiswa;
+    private TableView<Siswa> siswaTableView;
+    private boolean presensiSudahDiperiksa = false;
 
     public InputPresensiView(Stage primaryStage, GuruDashboardView guruDashboardView, Guru guru) {
         this.primaryStage = primaryStage;
@@ -75,10 +80,50 @@ public class InputPresensiView {
             "-fx-padding: 10px;"
         );
 
-        // Daftar Siswa
-        List<Siswa> daftarSiswa = siswaController.daftarSiswaByKelas(guru.getKelasYangDiajar());
+        // Tambahkan listener untuk mengecek presensi saat tanggal berubah
+        tanggalPicker.valueProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue != null) {
+                // Cek apakah sudah ada presensi untuk tanggal ini
+                boolean sudahAdaPresensi = presensiController.cekPresensiSudahAda(guru.getKelasYangDiajar(), newValue);
+                
+                if (!sudahAdaPresensi) {
+                    // Jika belum ada presensi, reset status dan keterangan untuk setiap siswa
+                    for (Siswa siswa : daftarSiswa) {
+                        siswa.setStatus(null);
+                        siswa.setKeterangan(null);
+                    }
+                    
+                    // Refresh tabel
+                    siswaTableView.refresh();
+                } else {
+                    // Jika sudah ada presensi, ambil data presensi dari database
+                    List<Presensi> presensiList = presensiController.cariPresensiByKelasAndTanggal(
+                        guru.getKelasYangDiajar(), 
+                        newValue,
+                        guru
+                    );
+                    
+                    // Update status dan keterangan siswa sesuai data presensi
+                    for (Siswa siswa : daftarSiswa) {
+                        for (Presensi presensi : presensiList) {
+                            if (presensi.getSiswa().getId() == siswa.getId()) {
+                                siswa.setStatus(presensi.getStatus());
+                                siswa.setKeterangan(presensi.getKeterangan());
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Refresh tabel
+                    siswaTableView.refresh();
+                }
+            }
+        });
 
-        TableView<Siswa> siswaTableView = new TableView<>();
+        // Daftar Siswa
+        daftarSiswa = siswaController.daftarSiswaByKelas(guru.getKelasYangDiajar());
+
+        siswaTableView = new TableView<>();
         siswaTableView.setStyle(
             "-fx-background-color: white;" +
             "-fx-control-inner-background: white;" +
@@ -185,6 +230,18 @@ public class InputPresensiView {
 
             if (gagalDitambahkan == 0) {
                 showAlert("Presensi berhasil disimpan untuk " + berhasilDitambahkan + " siswa!");
+                
+                // Reset status dan keterangan untuk setiap siswa
+                for (Siswa siswa : daftarSiswa) {
+                    siswa.setStatus(null);
+                    siswa.setKeterangan(null);
+                }
+                
+                // Refresh tabel
+                siswaTableView.refresh();
+                
+                // Reset tanggal ke hari ini
+                tanggalPicker.setValue(LocalDate.now());
             } else {
                 showAlert("Presensi sebagian berhasil:\n" +
                           "Berhasil: " + berhasilDitambahkan + "\n" +

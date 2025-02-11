@@ -18,23 +18,37 @@ public class SiswaController {
     public boolean tambahSiswa(Siswa siswa) {
         try {
             String query = "INSERT INTO siswa (nis, nama_siswa, kelas, jenis_kelamin, tahun_ajaran) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement stmt = connection.prepareStatement(query);
+            PreparedStatement stmt = connection.prepareStatement(query, Statement.RETURN_GENERATED_KEYS);
             stmt.setString(1, siswa.getNis());
             stmt.setString(2, siswa.getNama());
             stmt.setString(3, siswa.getKelas());
             stmt.setString(4, siswa.getJenisKelamin());
             stmt.setString(5, siswa.getTahunAjaran());
 
-            return stmt.executeUpdate() > 0;
+            int affectedRows = stmt.executeUpdate();
+            
+            if (affectedRows == 0) {
+                return false;
+            }
+
+            // Ambil ID yang baru saja dibuat
+            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                if (generatedKeys.next()) {
+                    siswa.setId(generatedKeys.getInt(1));
+                }
+            }
+
+            return true;
         } catch (SQLException e) {
-            System.err.println("Tambah siswa gagal: " + e.getMessage());
+            System.err.println("Gagal menambahkan siswa: " + e.getMessage());
+            e.printStackTrace();
             return false;
         }
     }
 
     public List<Siswa> daftarSiswa() {
         List<Siswa> siswaList = new ArrayList<>();
-        String query = "SELECT id_siswa, nis, nama_siswa, kelas, jenis_kelamin, tahun_ajaran FROM siswa";
+        String query = "SELECT id_siswa, nis, nama_siswa, kelas, jenis_kelamin, tahun_ajaran FROM siswa WHERE is_aktif = 1";
         
         try (PreparedStatement stmt = connection.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
@@ -119,7 +133,10 @@ public class SiswaController {
 
     public boolean hapusSiswa(int id) {
         try {
-            PreparedStatement stmt = connection.prepareStatement("DELETE FROM siswa WHERE id_siswa = ?");
+            // Soft delete: update status siswa menjadi tidak aktif
+            PreparedStatement stmt = connection.prepareStatement(
+                "UPDATE siswa SET is_aktif = 0 WHERE id_siswa = ?"
+            );
             stmt.setInt(1, id);
 
             return stmt.executeUpdate() > 0;
@@ -131,7 +148,7 @@ public class SiswaController {
 
     public List<Siswa> getSiswaByKelas(String kelas) {
         List<Siswa> siswaList = new ArrayList<>();
-        String query = "SELECT id_siswa, nis, nama_siswa, kelas, jenis_kelamin, tahun_ajaran FROM siswa WHERE kelas = ?";
+        String query = "SELECT id_siswa, nis, nama_siswa, kelas, jenis_kelamin, tahun_ajaran FROM siswa WHERE kelas = ? AND is_aktif = 1";
         
         try (PreparedStatement stmt = connection.prepareStatement(query)) {
             stmt.setString(1, kelas);
@@ -178,5 +195,57 @@ public class SiswaController {
 
     public List<Siswa> daftarSiswaByKelas(String kelas) {
         return getSiswaByKelas(kelas);
+    }
+
+    public List<Siswa> cariSiswaByKelas(String kelas) {
+        List<Siswa> daftarSiswa = new ArrayList<>();
+        try {
+            String query = "SELECT * FROM siswa WHERE kelas = ? AND is_aktif = 1";
+            PreparedStatement stmt = connection.prepareStatement(query);
+            stmt.setString(1, kelas);
+
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Siswa siswa = new Siswa(
+                    rs.getInt("id_siswa"),
+                    rs.getString("nis"),
+                    rs.getString("nama_siswa"),
+                    rs.getString("kelas"),
+                    rs.getString("jenis_kelamin"),
+                    rs.getString("tahun_ajaran")
+                );
+                daftarSiswa.add(siswa);
+            }
+        } catch (SQLException e) {
+            System.err.println("Gagal mencari siswa berdasarkan kelas: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return daftarSiswa;
+    }
+
+    public List<Siswa> daftarSiswaAktif() {
+        List<Siswa> siswaList = new ArrayList<>();
+        String query = "SELECT id_siswa, nis, nama_siswa, kelas, jenis_kelamin, tahun_ajaran FROM siswa WHERE is_aktif = 1";
+        
+        try (PreparedStatement stmt = connection.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            
+            while (rs.next()) {
+                Siswa siswa = new Siswa(
+                    rs.getInt("id_siswa"),
+                    rs.getString("nis"),
+                    rs.getString("nama_siswa"),
+                    rs.getString("kelas"),
+                    rs.getString("jenis_kelamin"),
+                    rs.getString("tahun_ajaran")
+                );
+                
+                siswaList.add(siswa);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        
+        return siswaList;
     }
 }

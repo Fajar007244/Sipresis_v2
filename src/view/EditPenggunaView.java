@@ -97,7 +97,7 @@ public class EditPenggunaView {
                 guru.setRole(role.toUpperCase());
                 
                 // Update kelas yang diajar jika ada
-                if (finalKelasField != null && !finalKelasField.getText().isEmpty()) {
+                if (finalKelasField != null) {
                     guru.setKelasYangDiajar(finalKelasField.getText());
                 }
             }

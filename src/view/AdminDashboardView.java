@@ -114,7 +114,7 @@ public class AdminDashboardView {
         HBox statsContainer = createStatsContainer();
 
         // Container untuk menu
-        VBox menuContainer = new VBox(10);
+        VBox menuContainer = new VBox(20);
         menuContainer.setAlignment(Pos.CENTER);
         menuContainer.setPadding(new Insets(20));
 
@@ -123,6 +123,9 @@ public class AdminDashboardView {
 
         // Menu Manajemen Pengguna
         setupMenuManajemenPengguna(menuContainer);
+
+        // Menu Manajemen Presensi
+        setupMenuManajemenPresensi(menuContainer);
 
         // Tambahkan semua komponen ke layout utama
         mainLayout.getChildren().addAll(
@@ -238,10 +241,13 @@ public class AdminDashboardView {
         Button daftarSiswaButton = createMenuButton("Daftar Siswa");
         daftarSiswaButton.setOnAction(e -> new DaftarSiswaView(primaryStage, adminUser));
 
+        HBox menuSiswaContainer = new HBox(15);
+        menuSiswaContainer.setAlignment(Pos.CENTER);
+        menuSiswaContainer.getChildren().addAll(tambahSiswaButton, daftarSiswaButton);
+
         menuContainer.getChildren().addAll(
             manajemenSiswaLabel, 
-            tambahSiswaButton, 
-            daftarSiswaButton
+            menuSiswaContainer
         );
     }
 
@@ -254,10 +260,35 @@ public class AdminDashboardView {
         Button daftarPenggunaButton = createMenuButton("Daftar Pengguna");
         daftarPenggunaButton.setOnAction(e -> new DaftarPenggunaView(primaryStage, adminUser));
 
+        HBox menuPenggunaContainer = new HBox(15);
+        menuPenggunaContainer.setAlignment(Pos.CENTER);
+        menuPenggunaContainer.getChildren().addAll(tambahPenggunaButton, daftarPenggunaButton);
+
         menuContainer.getChildren().addAll(
             manajemenPenggunaLabel, 
-            tambahPenggunaButton, 
-            daftarPenggunaButton
+            menuPenggunaContainer
+        );
+    }
+
+    private void setupMenuManajemenPresensi(VBox menuContainer) {
+        Label manajemenPresensiLabel = createMenuSectionLabel("Manajemen Presensi");
+        
+        Button tambahPresensiButton = createMenuButton("Tambah Presensi");
+        tambahPresensiButton.setOnAction(e -> new TambahPresensiView(primaryStage, this, adminUser));
+        
+        Button editPresensiButton = createMenuButton("Edit Presensi");
+        editPresensiButton.setOnAction(e -> new EditPresensiView(primaryStage, this, adminUser));
+        
+        Button laporanPresensiButton = createMenuButton("Laporan Presensi");
+        laporanPresensiButton.setOnAction(e -> new LaporanAbsensiView(primaryStage, adminUser));
+
+        HBox menuPresensiContainer = new HBox(15);
+        menuPresensiContainer.setAlignment(Pos.CENTER);
+        menuPresensiContainer.getChildren().addAll(tambahPresensiButton, editPresensiButton, laporanPresensiButton);
+
+        menuContainer.getChildren().addAll(
+            manajemenPresensiLabel, 
+            menuPresensiContainer
         );
     }
 
